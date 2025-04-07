@@ -1,0 +1,37 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "DBMS Project API",
+    "description": "API documentation for the DBMS project",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/timetable/": {
+      "post": {
+        "summary": "Add a timetable entry",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "class_id": {"type": "integer"},
+                "day": {"type": "integer"},
+                "period": {"type": "integer"},
+                "course_id": {"type": "integer"},
+                "staff_id": {"type": "integer"}
+              },
+              "required": ["class_id", "day", "period", "course_id", "staff_id"]
+            }
+          }
+        ],
+        "responses": {
+          "201": {"description": "Timetable entry added successfully"},
+          "400": {"description": "Invalid input"}
+        }
+      }
+    }
+  }
+}
