@@ -11,7 +11,7 @@
             "driver": "MySQL",
             "name": "dbmsproject",
             "database": "TimetableDB",
-            "username": "localhost"
+            "username": "root"
         }
     ]
 }

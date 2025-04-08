@@ -1,7 +1,7 @@
 // static/js/app.js
 
 document.addEventListener("DOMContentLoaded", function () {
-    const viewForm = document.getElementById("viewForm");
+    const viewForm = document.querySelector("form[action='/timetable/view']");  // Match form selector
   
     if (viewForm) {
       viewForm.addEventListener("submit", function (e) {
@@ -19,4 +19,3 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   });
-  

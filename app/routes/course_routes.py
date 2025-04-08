@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.models.course_model import db, Courses
+from app.models.course_model import Courses
+from app.models import db  # Fix db import
 
 # Create a Blueprint for course routes
 course_bp = Blueprint('course_bp', __name__)
@@ -44,6 +45,9 @@ def add_course():
     # Validate required fields
     if not data or 'course_code' not in data or 'course_name' not in data or 'classes_per_week' not in data:
         return jsonify({'message': 'Course code, name, and classes per week are required'}), 400
+
+    if data['classes_per_week'] <= 0:  # Validate positive integer
+        return jsonify({'message': 'Classes per week must be a positive integer'}), 400
 
     # Check for duplicate course codes
     existing_course = Courses.query.filter_by(course_code=data['course_code']).first()

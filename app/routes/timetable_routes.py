@@ -1,28 +1,100 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, flash, redirect, url_for, session
+from app.services.timetable_generator import TimetableGenerator
+from app.services.auth import login_required, role_required, validate_csrf_token
 from app.models import db
 from app.models.timetable_model import Timetable
+from app.models.course_model import Courses
+from app.models.staff_model import Staff
 
-# ✅ Declare the blueprint
 timetable_bp = Blueprint('timetable_bp', __name__)
 
-# ✅ Sample route to generate timetable
 @timetable_bp.route('/generate', methods=['POST'])
+@login_required
+@role_required(['admin'])
 def generate_timetable():
-    # Placeholder logic for now
-    return jsonify({"message": "Timetable generation route reached."})
+    """Generate a new timetable (admin only)"""
+    if not validate_csrf_token():
+        flash('Invalid or missing CSRF token', 'danger')
+        return redirect(url_for('home'))
 
-# ✅ Route to get timetable for a class
-@timetable_bp.route('/view/<int:class_id>', methods=['GET'])
-def get_timetable(class_id):
-    timetable = Timetable.query.filter_by(class_id=class_id).all()
-    if not timetable:
-        return jsonify({"error": "No timetable found for this class."}), 404
+    if session.get('user_role') != 'admin':
+        flash('Only administrators can generate timetables', 'danger')
+        return redirect(url_for('home'))
 
-    return jsonify([t.to_dict() for t in timetable])
+    try:
+        generator = TimetableGenerator()
+        success, message = generator.generate()
+        
+        if success:
+            flash('Timetable generated successfully', 'success')
+            return jsonify({"message": message}), 200
+        return jsonify({"error": message}), 500
+    except Exception as e:
+        flash(f'Error generating timetable: {str(e)}', 'danger')
+        return jsonify({"error": str(e)}), 500
+
+@timetable_bp.route('/view/<int:class_id>')
+@login_required
+def view_timetable(class_id):
+    """View timetable for a specific class"""
+    try:
+        user_role = session.get('user_role')
+        user_id = session.get('user_id')
+        
+        if not user_role or not user_id:
+            flash('Please login again', 'warning')
+            return redirect(url_for('auth_bp.login_page'))
+
+        # Admin can view all timetables
+        if user_role == 'admin':
+            pass  # Allow access
+        # Teachers can only view their assigned classes
+        elif user_role == 'teacher':
+            if isinstance(user_id, str):  # Dummy teacher
+                pass  # Allow for demo
+            else:
+                teacher_classes = Timetable.query.filter_by(staff_id=user_id).all()
+                if not any(t.class_id == class_id for t in teacher_classes):
+                    flash('You can only view timetables for classes you teach', 'warning')
+                    return redirect(url_for('home'))
+        else:
+            flash('Unauthorized access', 'danger')
+            return redirect(url_for('home'))
+
+        # Rest of the view_timetable code...
+        timetable = Timetable.query.filter_by(class_id=class_id).all()
+        if not timetable:
+            flash('No timetable found for this class', 'warning')
+            return redirect(url_for('home'))
+
+        # Format timetable data
+        timetable_grid = [[None for _ in range(7)] for _ in range(5)]
+        for entry in timetable:
+            course = Courses.query.get(entry.course_id)
+            staff = Staff.query.get(entry.staff_id)
+            timetable_grid[entry.day][entry.period] = {
+                'course_name': course.course_name if course else 'Unknown Course',
+                'staff_name': staff.name if staff else 'Unknown Staff',
+                'room': getattr(entry, 'room', 'TBD'),
+                'is_lab': getattr(entry, 'is_lab', False)
+            }
+
+        return render_template(
+            'timetable_view.html',
+            timetable=timetable_grid,
+            class_id=class_id,
+            is_break_period=lambda p: (class_id == 1 and p == 2) or (class_id != 1 and p == 3),
+            is_lunch_period=lambda p: (class_id == 1 and p == 4) or (class_id != 1 and p == 5),
+            is_academic_slot=lambda d, p: d == 2 and p >= 4  # Wednesday afternoon
+        )
+
+    except Exception as e:
+        flash(f'Error viewing timetable: {str(e)}', 'danger')
+        return redirect(url_for('home'))
 
 
 
-"""from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory
 from app.config import Config  # Import configuration settings
 from app.models import db  # Import shared db instance
 from app.routes.staff_routes import staff_bp
@@ -99,4 +171,3 @@ if __name__ == "__main__":
         with app.app_context():
             db.create_all()  # Create tables if they don't exist
     socketio.run(app, debug=True)
-"""

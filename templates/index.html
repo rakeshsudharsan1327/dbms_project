@@ -8,54 +8,76 @@
 <body class="bg-light">
     <div class="container py-5">
         <h1 class="mb-4 text-center">Welcome to Timetable Manager</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
         {% if not user %}
-        <div class="card mx-auto" style="max-width: 400px;">
-            <div class="card-body">
-                <h5 class="card-title">Login</h5>
-                <form action="/auth/login" method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" name="email" id="email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" name="password" id="password" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Login</button>
-                </form>
+            <div class="card mx-auto" style="max-width: 400px;">
+                <div class="card-body">
+                    <h5 class="card-title">Login</h5>
+                    <form action="{{ url_for('auth_bp.login') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" name="email" id="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" name="password" id="password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                </div>
             </div>
-        </div>
-
         {% else %}
-        <div class="alert alert-success">
-            Logged in as <strong>{{ user.name }}</strong> ({{ user.role }})
-        </div>
+            <nav class="navbar navbar-expand-lg navbar-light bg-white mb-4 rounded shadow-sm">
+                <div class="container-fluid">
+                    <span class="navbar-brand">Hello, {{ user.name }}!</span>
+                    <div class="navbar-nav ms-auto">
+                        <form action="{{ url_for('auth_bp.logout') }}" method="POST" class="d-inline">
+                            <input type="hidden" name="_csrf_token" value="{{ session['_csrf_token'] }}">
+                            <button class="btn btn-outline-danger">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
 
-        <form action="/auth/logout" method="POST" class="mb-3">
-            <button class="btn btn-danger">Logout</button>
-        </form>
-
-        {% if user.role == 'admin' %}
-        <div class="mb-3">
-            <a href="/admin" class="btn btn-dark me-2">Admin Panel</a>
-            <form action="/timetable/generate" method="POST" class="d-inline">
-                <button class="btn btn-success">Generate Timetable</button>
-            </form>
-        </div>
-        {% endif %}
-
-        <form action="/timetable/view" method="GET" class="row g-2 align-items-center">
-            <div class="col-auto">
-                <label for="class_id" class="col-form-label">Enter Class ID:</label>
+            <div class="row g-4">
+                {% if user.role == 'admin' %}
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Admin Actions</h5>
+                                <div class="d-grid gap-2">
+                                    <a href="/staff" class="btn btn-primary">Manage Staff</a>
+                                    <a href="/courses" class="btn btn-primary">Manage Courses</a>
+                                    <a href="/classes" class="btn btn-primary">Manage Classes</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">View Timetable</h5>
+                            <form action="/timetable/view" method="GET" class="d-grid gap-2">
+                                <input type="number" name="class_id" class="form-control" placeholder="Enter Class ID" required>
+                                <button type="submit" class="btn btn-success">View Timetable</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-auto">
-                <input type="number" name="class_id" id="class_id" class="form-control" required>
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary">View Timetable</button>
-            </div>
-        </form>
         {% endif %}
     </div>
 

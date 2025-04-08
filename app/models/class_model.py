@@ -7,4 +7,4 @@ class Classes(db.Model):
     degree = db.Column(db.String(50), nullable=False)
     semester = db.Column(db.Integer, nullable=False)
     batch_number = db.Column(db.String(10), nullable=False)
-    default_room = db.Column(db.String(50), nullable=True)  # Add this column
+    default_room = db.Column(db.String(50), nullable=True)  # Ensure optional

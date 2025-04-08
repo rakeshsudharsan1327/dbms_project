@@ -8,9 +8,7 @@ CREATE TABLE Courses (
     course_id INT PRIMARY KEY AUTO_INCREMENT,
     course_code VARCHAR(20) UNIQUE NOT NULL,
     course_name VARCHAR(255) NOT NULL,
-    classes_per_week INT NOT NULL,
-    eligible_teachers VARCHAR(255),
-    FOREIGN KEY (eligible_teachers) REFERENCES Staff(staff_id)
+    classes_per_week INT NOT NULL
 );
 
 -- Staff Preferred Courses Mapping
@@ -76,4 +74,13 @@ CREATE TABLE Admin_Requests (
 CREATE TABLE Holidays_Breaks (
     holiday_date DATE PRIMARY KEY,
     break_schedule TEXT NOT NULL
+);
+
+-- Course-Staff Table
+CREATE TABLE Course_Staff (
+    course_id INT,
+    staff_id INT,
+    PRIMARY KEY (course_id, staff_id),
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id),
+    FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
 );

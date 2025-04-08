@@ -1,6 +1,10 @@
 import unittest
 from app import create_app
-from models import db, Timetable, Classes, Courses, Staff
+from app.models import db  # Fix db import
+from app.models.timetable_model import Timetable
+from app.models.class_model import Classes
+from app.models.course_model import Courses
+from app.models.staff_model import Staff
 
 class TestTimetableRoutes(unittest.TestCase):
     def setUp(self):

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.models.class_model import db, Classes
+from app.models.class_model import Classes
+from app.models import db  # Fix db import
 
 # Create a Blueprint for class routes
 class_bp = Blueprint('class_bp', __name__)
@@ -45,6 +46,9 @@ def add_class():
     required_fields = ['class_name', 'degree', 'semester', 'batch_number']
     if not all(field in data for field in required_fields):
         return jsonify({'message': 'All fields (class_name, degree, semester, batch_number) are required'}), 400
+
+    if data['semester'] <= 0:  # Validate positive integer
+        return jsonify({'message': 'Semester must be a positive integer'}), 400
 
     # Check for duplicate class entries
     existing_class = Classes.query.filter_by(class_name=data['class_name'], degree=data['degree'], semester=data['semester']).first()

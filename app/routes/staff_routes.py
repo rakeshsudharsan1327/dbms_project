@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
-from app.models import db
+from app.models import db  # Fix db import
 from app.models.staff_model import Staff
+from validate_email import validate_email  # Import email validation
 
 # Create a Blueprint for staff routes
 staff_bp = Blueprint('staff_bp', __name__)
@@ -8,7 +9,9 @@ staff_bp = Blueprint('staff_bp', __name__)
 # ✅ Route to get all staff members
 @staff_bp.route('/staff', methods=['GET'])
 def get_all_staff():
-    staff_list = Staff.query.all()  # Fetch all staff records
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    staff_list = Staff.query.paginate(page=page, per_page=per_page, error_out=False).items
     if not staff_list:
         return jsonify({'message': 'No staff members found'}), 404
     
@@ -32,6 +35,10 @@ def add_staff():
     # Check if required fields are provided
     if not data or 'name' not in data or 'email' not in data:
         return jsonify({'message': 'Name and Email are required'}), 400
+
+    # Validate email format
+    if not validate_email(data['email']):
+        return jsonify({'message': 'Invalid email format'}), 400
 
     # Check if the email already exists
     existing_staff = Staff.query.filter_by(email=data['email']).first()
